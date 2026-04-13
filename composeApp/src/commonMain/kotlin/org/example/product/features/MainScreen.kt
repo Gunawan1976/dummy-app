@@ -10,6 +10,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import org.example.product.core.utils.SessionState
 import org.example.product.features.auth.presentation.ui.LoginScreen
+import org.example.product.features.auth.presentation.ui.ProfileScreen
 import org.example.product.features.auth.presentation.viewmodel.SessionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -19,35 +20,42 @@ fun MainScreen(
 ){
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
 
     val sessionState by sessionViewModel.sessionState.collectAsState()
 
-    // Dengarkan perubahan state yang bersifat one-time-event (seperti Force Logout)
     LaunchedEffect(sessionState) {
-        if (sessionState is SessionState.ForceLoggedOut) {
-            val message = (sessionState as SessionState.ForceLoggedOut).message
-
-            // 1. Tampilkan pesan ke user (misal pakai Toast / Snackbar)
-            println("PEMBERITAHUAN: $message")
-
-            // 2. Arahkan navigasi paksa ke halaman Login, hapus semua backstack
-            navController.navigate("login_route") {
-                popUpTo(0) { inclusive = true }
+        when (sessionState) {
+            is SessionState.LoggedIn -> {
+                // Jika sudah login, pastikan berada di Profile
+                navController.navigate("profile_route") {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             }
-
-            // 3. Reset state agar tidak ter-trigger ulang jika layar diputar (recomposition)
-            sessionViewModel.resetStateToLoggedOut()
+            is SessionState.LoggedOut, is SessionState.ForceLoggedOut -> {
+                // Jika tidak ada token / logout, balik ke Login
+                navController.navigate("login_route") {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            else -> {}
         }
     }
 
-    // Atur Root Navigation
     NavHost(
         navController = navController,
-        startDestination = if (sessionState == SessionState.LoggedIn) "home_route" else "login_route"
+        startDestination = if (sessionState is SessionState.LoggedIn) "profile_route" else "login_route"
     ) {
-        composable("login_route") { LoginScreen() }
-//        composable("home_route") { DashboardScreen() }
-        // ... fitur lainnya ...
+        composable("login_route") { 
+            LoginScreen(onLoginSuccess = {
+                navController.navigate("profile_route") {
+//                    popUpTo("login_route") { inclusive = true }
+                }
+            })
+        }
+        composable("profile_route") { 
+            ProfileScreen() 
+        }
     }
 }

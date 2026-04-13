@@ -9,7 +9,7 @@ val viewModelModule = module {
     factory { SessionViewModel(get()) }
 
     // Feature ViewModels
-    factory { AuthViewModel(get()) }
+    factory { AuthViewModel(get(),get(),get(),get()) }
 //    factory { DashboardViewModel(get()) }
 //    factory { PantryViewModel(get()) } // Contoh fitur Pantry Manager-mu
 }

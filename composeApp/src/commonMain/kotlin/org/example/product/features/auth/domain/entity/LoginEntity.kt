@@ -5,5 +5,6 @@ data class AuthUser(
     val id: Int,
     val fullName: String,
     val email: String,
-    val token: String
+    val accessToken: String,
+    val refreshToken: String
 )

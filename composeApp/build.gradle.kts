@@ -45,7 +45,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.compose.icons.core)
-            implementation("androidx.compose.material:material-icons-extended:1.7.0")
+            implementation(libs.compose.icons.extended)
 
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
@@ -59,7 +59,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation("io.ktor:ktor-client-logging:3.0.1") // Sesuaikan versi Ktor kamu
+            implementation("io.ktor:ktor-client-logging:3.0.1")
             implementation("io.ktor:ktor-client-auth:3.0.1")
 
             // Serialization
@@ -74,6 +74,9 @@ kotlin {
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
 
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
+            // Multiplatform Settings
+            implementation(libs.multiplatform.settings)
 
         }
         commonTest.dependencies {

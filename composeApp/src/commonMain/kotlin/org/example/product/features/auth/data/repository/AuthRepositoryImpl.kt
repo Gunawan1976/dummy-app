@@ -9,7 +9,6 @@ import org.example.product.features.auth.data.sources.AuthApi
 import org.example.product.features.auth.domain.entity.AuthUser
 import org.example.product.features.auth.domain.repository.AuthRepository
 
-// features/auth/data/repository/AuthRepositoryImpl.kt
 class AuthRepositoryImpl(
     private val authApi: AuthApi
 ) : AuthRepository {
@@ -23,27 +22,42 @@ class AuthRepositoryImpl(
                 id = response.id,
                 fullName = "${response.firstName} ${response.lastName}",
                 email = response.email,
-                token = response.token
+                accessToken = response.accessToken ?: "",
+                refreshToken = response.refreshToken ?: ""
             )
 
-            // Return Success
             Results.Success(authUser)
-
         } catch (e: ClientRequestException) {
-            // HTTP 4xx Errors (misal: 400 Bad Request, 401 Unauthorized)
-            // Dari DummyJSON biasanya karena password/username salah
             Results.Error("Login gagal: Username atau password salah.", e)
-
         } catch (e: ServerResponseException) {
-            // HTTP 5xx Errors (Server DummyJSON sedang down)
             Results.Error("Terjadi kesalahan pada server. Coba lagi nanti.", e)
-
         } catch (e: IOException) {
-            // Tidak ada koneksi internet / Timeout
             Results.Error("Tidak ada koneksi internet. Periksa jaringan Anda.", e)
-
         } catch (e: Exception) {
-            // Error lainnya yang tidak terduga (misal error parsing JSON)
+            Results.Error("Terjadi kesalahan yang tidak terduga: ${e.message}", e)
+        }
+    }
+
+    override suspend fun getCurrentUser(): Results<AuthUser> {
+        return try {
+            val response = authApi.getCurrentUser()
+
+            val authUser = AuthUser(
+                id = response.id,
+                fullName = "${response.firstName} ${response.lastName}",
+                email = response.email,
+                accessToken = response.accessToken ?: "",
+                refreshToken = response.refreshToken ?: ""
+            )
+
+            Results.Success(authUser)
+        } catch (e: ClientRequestException) {
+            Results.Error("Gagal mengambil data user.", e)
+        } catch (e: ServerResponseException) {
+            Results.Error("Terjadi kesalahan pada server.", e)
+        } catch (e: IOException) {
+            Results.Error("Tidak ada koneksi internet.", e)
+        } catch (e: Exception) {
             Results.Error("Terjadi kesalahan yang tidak terduga: ${e.message}", e)
         }
     }

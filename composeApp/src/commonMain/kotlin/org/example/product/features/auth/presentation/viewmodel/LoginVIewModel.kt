@@ -7,13 +7,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.example.product.core.utils.Results
+import org.example.product.core.utils.SessionManager
+import org.example.product.core.utils.TokenProvider
+import org.example.product.features.auth.domain.usecase.GetCurrentUserUseCase
 import org.example.product.features.auth.domain.usecase.LoginUseCase
 import org.example.product.features.auth.presentation.state.AuthState
 
 // features/auth/presentation/AuthViewModel.kt
 // features/auth/presentation/AuthViewModel.kt
 class AuthViewModel(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val tokenProvider: TokenProvider, // Tambahkan ini
+    private val sessionManager: SessionManager // Tambahkan ini
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -26,11 +32,15 @@ class AuthViewModel(
             // Panggil UseCase dan gunakan 'when' untuk mengecek Result
             when (val result = loginUseCase(username, password)) {
                 is Results.Success -> {
-                    // Data berhasil didapat
-                    val user = result.data
-                    _authState.value = AuthState.Success(user)
+                    // SIMPAN TOKEN KE LOCAL STORAGE
+                    tokenProvider.saveTokens(
+                        accessToken = result.data.accessToken,
+                        refreshToken = result.data.refreshToken
+                    )
+                    // BERITAHU SESSION MANAGER BAHWA LOGIN SUKSES
+                    sessionManager.loginSuccess()
 
-                    // TODO: Simpan user.token ke lokal (misal dengan Settings)
+                    _authState.value = AuthState.Success(result.data)
                 }
 
                 is Results.Error -> {
@@ -41,5 +51,24 @@ class AuthViewModel(
                 else -> {}
             }
         }
+    }
+
+    fun getCurrentUser() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            when (val result = getCurrentUserUseCase()) {
+                is Results.Success -> {
+                    _authState.value = AuthState.Success(result.data)
+                }
+                is Results.Error -> {
+                    _authState.value = AuthState.Error(result.message)
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun logout() {
+        sessionManager.logout()
     }
 }

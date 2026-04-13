@@ -23,10 +23,8 @@ import org.example.product.features.auth.data.model.RefreshRequest
 import org.example.product.features.auth.data.model.RefreshTokenResponse
 import org.koin.dsl.module
 
-// core/di/NetworkModule.kt
 val networkModule = module {
     single<TokenProvider> { TokenProviderImpl() }
-
     single { SessionManager(get()) }
 
     single {
@@ -44,7 +42,7 @@ val networkModule = module {
             install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
-                        println("Ktor => $message") // Print ke console/logcat
+                        println("Ktor => $message")
                     }
                 }
                 level = LogLevel.ALL
@@ -52,41 +50,38 @@ val networkModule = module {
 
             install(Auth) {
                 bearer {
-                    // Fungsi ini dipanggil setiap kali request dibuat
                     loadTokens {
                         val accessToken = tokenProvider.getAccessToken()
                         val refreshToken = tokenProvider.getRefreshToken()
-                        if (accessToken != null && refreshToken != null) {
+                        if (!accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()) {
                             BearerTokens(accessToken, refreshToken)
                         } else null
                     }
 
-                    refreshTokens {
-                        // Ambil refresh token yang lama dari lokal
-                        val oldRefreshToken = tokenProvider.getRefreshToken()
-                            ?: return@refreshTokens null // Jika tidak ada, batalkan refresh
+                    // PAKSA KIRIM TOKEN DI REQUEST PERTAMA
+                    sendWithoutRequest { request ->
+                        val path = request.url.buildString()
+                        path.contains("auth/me") || path.contains("products")
+                    }
 
+                    refreshTokens {
+                        val oldRefreshToken = tokenProvider.getRefreshToken() ?: return@refreshTokens null
                         try {
-                            // Panggil API Refresh DummyJSON (Gunakan parameter 'client' bawaan dari Ktor)
                             val refreshResponse = client.post("auth/refresh") {
                                 contentType(ContentType.Application.Json)
                                 setBody(RefreshRequest(refreshToken = oldRefreshToken))
                             }.body<RefreshTokenResponse>()
 
-                            // Simpan token baru ke lokal
                             tokenProvider.saveTokens(
                                 accessToken = refreshResponse.token,
                                 refreshToken = refreshResponse.refreshToken
                             )
 
-                            // Kembalikan token baru ke Ktor agar request yang gagal (401) bisa diulang
                             BearerTokens(
                                 accessToken = refreshResponse.token,
                                 refreshToken = refreshResponse.refreshToken
                             )
                         } catch (e: Exception) {
-                            // Jika refresh token juga gagal/expired (misal: HTTP 400/401)
-                            // Hapus token lokal agar user ter-logout dan kembali ke halaman Login
                             tokenProvider.clearTokens()
                             sessionManager.forceLogout()
                             null

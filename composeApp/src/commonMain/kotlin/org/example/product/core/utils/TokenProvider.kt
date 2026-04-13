@@ -1,5 +1,8 @@
 package org.example.product.core.utils
 
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.set
+
 // core/utils/TokenProvider.kt
 interface TokenProvider {
     fun getAccessToken(): String?
@@ -8,21 +11,28 @@ interface TokenProvider {
     fun clearTokens()
 }
 
-class TokenProviderImpl : TokenProvider {
-    // Di aplikasi asli, ambil dari MultiplatformSettings atau EncryptedSharedPreferences
+class TokenProviderImpl(private val settings: Settings = Settings()) : TokenProvider {
+    
+    companion object {
+        private const val KEY_ACCESS_TOKEN = "access_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
+    }
+
     override fun getAccessToken(): String? {
-        TODO("Not yet implemented")
+        return settings.getStringOrNull(KEY_ACCESS_TOKEN)
     }
 
     override fun getRefreshToken(): String? {
-        TODO("Not yet implemented")
+        return settings.getStringOrNull(KEY_REFRESH_TOKEN)
     }
 
     override fun saveTokens(accessToken: String, refreshToken: String) {
-        TODO("Not yet implemented")
+        settings[KEY_ACCESS_TOKEN] = accessToken
+        settings[KEY_REFRESH_TOKEN] = refreshToken
     }
 
     override fun clearTokens() {
-        TODO("Not yet implemented")
+        settings.remove(KEY_ACCESS_TOKEN)
+        settings.remove(KEY_REFRESH_TOKEN)
     }
 }
