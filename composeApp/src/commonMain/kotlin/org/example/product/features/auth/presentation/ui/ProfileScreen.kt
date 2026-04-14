@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.example.product.core.utils.components.shimmerEffect
 import org.example.product.features.auth.presentation.state.AuthState
 import org.example.product.features.auth.presentation.viewmodel.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -18,7 +19,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    viewModel: AuthViewModel = koinViewModel()
+    viewModel: AuthViewModel = koinViewModel(),
+    onLogoutClick: () -> Unit // Tambahkan parameter callback ini
 ) {
     val authState by viewModel.authState.collectAsState()
 
@@ -41,7 +43,35 @@ fun ProfileScreen(
         ) {
             when (val state = authState) {
                 is AuthState.Loading -> {
-                    CircularProgressIndicator()
+                    // MENGGUNAKAN SHIMMER EFFECT
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        // Shimmer Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .shimmerEffect()
+                        )
+
+                        // Shimmer Nama
+                        Box(
+                            modifier = Modifier
+                                .height(32.dp)
+                                .fillMaxWidth(0.6f)
+                                .shimmerEffect()
+                        )
+
+                        // Shimmer Email
+                        Box(
+                            modifier = Modifier
+                                .height(20.dp)
+                                .fillMaxWidth(0.4f)
+                                .shimmerEffect()
+                        )
+                    }
                 }
 
                 is AuthState.Success -> {
@@ -57,12 +87,12 @@ fun ProfileScreen(
                             modifier = Modifier.size(80.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
-                        
+
                         Text(
                             text = user.fullName,
                             style = MaterialTheme.typography.headlineMedium
                         )
-                        
+
                         Text(
                             text = user.email,
                             style = MaterialTheme.typography.bodyLarge,
@@ -72,7 +102,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Button(
-                            onClick = { /* Implementasi Logout bisa di sini */ },
+                            onClick = onLogoutClick, // Panggil callback di sini
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
@@ -83,7 +113,6 @@ fun ProfileScreen(
                 }
 
                 is AuthState.Error -> {
-                    println("isi dari ini${state.message}")
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)

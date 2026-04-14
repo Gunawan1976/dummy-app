@@ -13,41 +13,41 @@ import org.example.product.features.auth.domain.usecase.GetCurrentUserUseCase
 import org.example.product.features.auth.domain.usecase.LoginUseCase
 import org.example.product.features.auth.presentation.state.AuthState
 
-// features/auth/presentation/AuthViewModel.kt
-// features/auth/presentation/AuthViewModel.kt
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val tokenProvider: TokenProvider, // Tambahkan ini
-    private val sessionManager: SessionManager // Tambahkan ini
+    private val tokenProvider: TokenProvider,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+    // Blok init DIHAPUS agar tidak otomatis hit API saat ViewModel dibuat.
+    // Pemanggilan API diserahkan ke UI melalui LaunchedEffect.
+
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            // Panggil UseCase dan gunakan 'when' untuk mengecek Result
             when (val result = loginUseCase(username, password)) {
                 is Results.Success -> {
-                    // SIMPAN TOKEN KE LOCAL STORAGE
+                    // 1. Simpan Token
+                    println("isi dari token ini${result.data.accessToken}")
+                    println("isi dari token ini${result.data.refreshToken}")
                     tokenProvider.saveTokens(
                         accessToken = result.data.accessToken,
                         refreshToken = result.data.refreshToken
                     )
-                    // BERITAHU SESSION MANAGER BAHWA LOGIN SUKSES
+                    // 2. Beri tahu aplikasi bahwa user sudah login
                     sessionManager.loginSuccess()
 
+                    // 3. Update state UI
                     _authState.value = AuthState.Success(result.data)
                 }
-
                 is Results.Error -> {
-                    // Data gagal didapat, tampilkan pesan error yang sudah dirapikan di Repository
                     _authState.value = AuthState.Error(result.message)
                 }
-
                 else -> {}
             }
         }
@@ -56,11 +56,14 @@ class AuthViewModel(
     fun getCurrentUser() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
+
             when (val result = getCurrentUserUseCase()) {
                 is Results.Success -> {
                     _authState.value = AuthState.Success(result.data)
                 }
                 is Results.Error -> {
+                    // Biarkan Interceptor yang mengurus force logout jika 401.
+                    // Di sini kita sekadar update state untuk pesan error umum (misal: No Internet)
                     _authState.value = AuthState.Error(result.message)
                 }
                 else -> {}
@@ -69,6 +72,11 @@ class AuthViewModel(
     }
 
     fun logout() {
+        // Hapus token dan ubah status sesi global ke LoggedOut
         sessionManager.logout()
+
+        // Kembalikan state ke Idle agar tidak "nyangkut" di Success
+        // jika user login lagi nantinya.
+        _authState.value = AuthState.Idle
     }
 }

@@ -13,13 +13,17 @@ sealed class SessionState {
     data class ForceLoggedOut(val message: String) : SessionState()
 }
 
+// core/utils/SessionManager.kt
+
 class SessionManager(private val tokenProvider: TokenProvider) {
 
     private val _sessionState = MutableStateFlow<SessionState>(SessionState.Idle)
     val sessionState: StateFlow<SessionState> = _sessionState.asStateFlow()
 
+    // 1. Tambahkan callback pembersih cache
+    var clearKtorCache: (() -> Unit)? = null
+
     init {
-        // Cek status saat aplikasi pertama kali dibuka
         if (tokenProvider.getAccessToken() != null) {
             _sessionState.value = SessionState.LoggedIn
         } else {
@@ -28,16 +32,21 @@ class SessionManager(private val tokenProvider: TokenProvider) {
     }
 
     fun loginSuccess() {
+        // 2. Panggil di sini agar Ktor membaca token yang baru didapat
+        clearKtorCache?.invoke()
         _sessionState.value = SessionState.LoggedIn
     }
 
     fun logout() {
         tokenProvider.clearTokens()
+        // 3. Panggil di sini agar Ktor membuang token yang lama
+        clearKtorCache?.invoke()
         _sessionState.value = SessionState.LoggedOut
     }
 
-    fun forceLogout(reason: String = "Sesi telah berakhir. Silakan login kembali.") {
+    fun forceLogout(reason: String = "Sesi telah berakhir.") {
         tokenProvider.clearTokens()
+        clearKtorCache?.invoke()
         _sessionState.value = SessionState.ForceLoggedOut(reason)
     }
 }

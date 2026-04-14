@@ -55,7 +55,11 @@ fun MainScreen(
             })
         }
         composable("profile_route") { 
-            ProfileScreen() 
+            ProfileScreen(
+                onLogoutClick = {
+                    sessionViewModel.resetStateToLoggedOut()
+                }
+            )
         }
     }
 }

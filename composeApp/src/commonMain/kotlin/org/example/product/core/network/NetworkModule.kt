@@ -3,6 +3,7 @@ package org.example.product.core.network
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -23,6 +24,8 @@ import org.example.product.features.auth.data.model.RefreshRequest
 import org.example.product.features.auth.data.model.RefreshTokenResponse
 import org.koin.dsl.module
 
+// ... import lainnya ...
+
 val networkModule = module {
     single<TokenProvider> { TokenProviderImpl() }
     single { SessionManager(get()) }
@@ -31,6 +34,8 @@ val networkModule = module {
         val tokenProvider = get<TokenProvider>()
         val sessionManager = get<SessionManager>()
 
+        // HAPUS "val client = " DI SINI
+        // Langsung return HttpClient
         HttpClient {
             install(ContentNegotiation) {
                 json(Json {
@@ -58,7 +63,6 @@ val networkModule = module {
                         } else null
                     }
 
-                    // PAKSA KIRIM TOKEN DI REQUEST PERTAMA
                     sendWithoutRequest { request ->
                         val path = request.url.buildString()
                         path.contains("auth/me") || path.contains("products")
@@ -83,7 +87,7 @@ val networkModule = module {
                             )
                         } catch (e: Exception) {
                             tokenProvider.clearTokens()
-                            sessionManager.forceLogout()
+                            sessionManager.forceLogout() // Paksa user ke layar Login
                             null
                         }
                     }
@@ -93,6 +97,6 @@ val networkModule = module {
             defaultRequest {
                 url("https://dummyjson.com/")
             }
-        }
+        } // Blok HttpClient langsung menjadi return value dari blok single{} Koin
     }
 }
