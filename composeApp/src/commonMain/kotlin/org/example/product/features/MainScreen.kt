@@ -1,9 +1,15 @@
 package org.example.product.features
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -12,54 +18,97 @@ import org.example.product.core.utils.SessionState
 import org.example.product.features.auth.presentation.ui.LoginScreen
 import org.example.product.features.auth.presentation.ui.ProfileScreen
 import org.example.product.features.auth.presentation.viewmodel.SessionViewModel
+import org.example.product.features.product.presentation.ui.HomeProductScreen
 import org.koin.compose.viewmodel.koinViewModel
+
+// 1. Buat Data Class untuk Item Bottom Nav
+sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
+    object Home : BottomNavItem("home_route", "Home", Icons.Default.Home)
+    object Profile : BottomNavItem("profile_route", "Profile", Icons.Default.Person)
+}
 
 @Composable
 fun MainScreen(
     sessionViewModel: SessionViewModel = koinViewModel()
-){
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
     val sessionState by sessionViewModel.sessionState.collectAsState()
 
+    // Daftar menu bottom nav
+    val bottomNavItems = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.Profile
+    )
+
+    // Cek apakah bottom bar harus ditampilkan (Sembunyikan jika di layar login)
+    val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
+
+    // 2. Perbaikan LaunchedEffect
+    // Hanya observasi untuk Force Logout. Navigasi masuk dikendalikan startDestination.
     LaunchedEffect(sessionState) {
-        when (sessionState) {
-            is SessionState.LoggedIn -> {
-                // Jika sudah login, pastikan berada di Profile
-                navController.navigate("profile_route") {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
+        if (sessionState is SessionState.LoggedOut || sessionState is SessionState.ForceLoggedOut) {
+            navController.navigate("login_route") {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
             }
-            is SessionState.LoggedOut, is SessionState.ForceLoggedOut -> {
-                // Jika tidak ada token / logout, balik ke Login
-                navController.navigate("login_route") {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-            else -> {}
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = if (sessionState is SessionState.LoggedIn) "profile_route" else "login_route"
-    ) {
-        composable("login_route") { 
-            LoginScreen(onLoginSuccess = {
-                navController.navigate("profile_route") {
-//                    popUpTo("login_route") { inclusive = true }
+    // 3. Gunakan Scaffold untuk meletakkan Bottom Bar
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar {
+                    bottomNavItems.forEach { item ->
+                        // Tentukan apakah item ini sedang aktif
+                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+
+                        NavigationBarItem(
+                            icon = { Icon(item.icon, contentDescription = item.title) },
+                            label = { Text(item.title) },
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
                 }
-            })
+            }
         }
-        composable("profile_route") { 
-            ProfileScreen(
-                onLogoutClick = {
-                    sessionViewModel.resetStateToLoggedOut()
-                }
-            )
+    ) { innerPadding ->
+        // 4. NavHost diletakkan di dalam Scaffold padding
+        NavHost(
+            navController = navController,
+            //perpindaha halaman dengan bottomnavitem.home.route
+            startDestination = if (sessionState is SessionState.LoggedIn) BottomNavItem.Home.route else "login_route",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("login_route") {
+                LoginScreen(onLoginSuccess = {
+
+                })
+            }
+
+            composable("home_route") {
+                HomeProductScreen() // Panggil layar Home kamu di sini
+            }
+
+            composable("profile_route") {
+                ProfileScreen(
+                    onLogoutClick = {
+                        sessionViewModel.resetStateToLoggedOut()
+                    }
+                )
+            }
         }
     }
 }

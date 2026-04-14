@@ -3,7 +3,6 @@ package org.example.product.core.network
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -11,10 +10,13 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.HttpRequestPipeline
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.example.product.core.utils.SessionManager
@@ -24,8 +26,6 @@ import org.example.product.features.auth.data.model.RefreshRequest
 import org.example.product.features.auth.data.model.RefreshTokenResponse
 import org.koin.dsl.module
 
-// ... import lainnya ...
-
 val networkModule = module {
     single<TokenProvider> { TokenProviderImpl() }
     single { SessionManager(get()) }
@@ -34,9 +34,8 @@ val networkModule = module {
         val tokenProvider = get<TokenProvider>()
         val sessionManager = get<SessionManager>()
 
-        // HAPUS "val client = " DI SINI
-        // Langsung return HttpClient
-        HttpClient {
+        // KEMBALIKAN "val client =" UNTUK KITA INTERCEPT NANTINYA
+        val client = HttpClient {
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
@@ -64,13 +63,14 @@ val networkModule = module {
                     }
 
                     sendWithoutRequest { request ->
-                        val path = request.url.buildString()
+                        val path = request.url.encodedPath // Lebih aman menggunakan encodedPath
                         path.contains("auth/me") || path.contains("products")
                     }
 
                     refreshTokens {
                         val oldRefreshToken = tokenProvider.getRefreshToken() ?: return@refreshTokens null
                         try {
+                            // Menggunakan client bawaan dari blok refreshTokens agar terhindar dari Infinite Loop
                             val refreshResponse = client.post("auth/refresh") {
                                 contentType(ContentType.Application.Json)
                                 setBody(RefreshRequest(refreshToken = oldRefreshToken))
@@ -87,7 +87,7 @@ val networkModule = module {
                             )
                         } catch (e: Exception) {
                             tokenProvider.clearTokens()
-                            sessionManager.forceLogout() // Paksa user ke layar Login
+                            sessionManager.forceLogout()
                             null
                         }
                     }
@@ -97,6 +97,21 @@ val networkModule = module {
             defaultRequest {
                 url("https://dummyjson.com/")
             }
-        } // Blok HttpClient langsung menjadi return value dari blok single{} Koin
+        }
+
+        // --- THE MAGIC FIX: INTERCEPTOR MANUAL ---
+        // Ini akan berjalan setiap kali aplikasi melakukan hit API.
+        // Jika token lokal ada, kita paksa masuk ke dalam header,
+        // mengabaikan apapun cache rusak yang dimiliki oleh plugin Auth.
+        client.requestPipeline.intercept(HttpRequestPipeline.State) {
+            val currentToken = tokenProvider.getAccessToken()
+            if (!currentToken.isNullOrBlank()) {
+                context.headers.remove(HttpHeaders.Authorization) // Buang header kosong bawaan Ktor
+                context.headers.append(HttpHeaders.Authorization, "Bearer $currentToken") // Suntik token segar
+            }
+        }
+
+        // Kembalikan instance client ke Koin
+        client
     }
 }

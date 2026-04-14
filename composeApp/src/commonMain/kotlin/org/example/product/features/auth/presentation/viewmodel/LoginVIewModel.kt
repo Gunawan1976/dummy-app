@@ -33,8 +33,6 @@ class AuthViewModel(
             when (val result = loginUseCase(username, password)) {
                 is Results.Success -> {
                     // 1. Simpan Token
-                    println("isi dari token ini${result.data.accessToken}")
-                    println("isi dari token ini${result.data.refreshToken}")
                     tokenProvider.saveTokens(
                         accessToken = result.data.accessToken,
                         refreshToken = result.data.refreshToken
@@ -75,8 +73,6 @@ class AuthViewModel(
         // Hapus token dan ubah status sesi global ke LoggedOut
         sessionManager.logout()
 
-        // Kembalikan state ke Idle agar tidak "nyangkut" di Success
-        // jika user login lagi nantinya.
         _authState.value = AuthState.Idle
     }
 }
