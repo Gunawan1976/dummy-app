@@ -56,6 +56,13 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            // Jika sukses (API balikan 200 dan token tersimpan), panggil fungsi navigasi
+            onLoginSuccess()
+        }
+    }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier

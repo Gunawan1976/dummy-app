@@ -2,6 +2,7 @@ package org.example.product.core.di
 
 import org.example.product.core.network.networkModule
 import org.example.product.features.auth.authModule
+import org.example.product.features.product.productModule
 import org.example.product.viewModelModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
@@ -12,7 +13,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     modules(
         networkModule,
         authModule,
-        viewModelModule
+        viewModelModule,
+        productModule
         // tambahkan modul fitur lain di sini nantinya
     )
 }

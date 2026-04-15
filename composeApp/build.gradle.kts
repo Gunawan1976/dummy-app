@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation("app.cash.sqldelight:android-driver:2.0.2")
             implementation(libs.koin.android)
+            implementation("androidx.core:core-splashscreen:1.2.0")
         }
         commonMain.dependencies {
             // Compose

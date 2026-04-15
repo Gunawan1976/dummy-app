@@ -19,6 +19,7 @@ import org.example.product.features.auth.presentation.ui.LoginScreen
 import org.example.product.features.auth.presentation.ui.ProfileScreen
 import org.example.product.features.auth.presentation.viewmodel.SessionViewModel
 import org.example.product.features.product.presentation.ui.HomeProductScreen
+import org.example.product.features.splash.presentation.SplashScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 // 1. Buat Data Class untuk Item Bottom Nav
@@ -46,14 +47,14 @@ fun MainScreen(
     // Cek apakah bottom bar harus ditampilkan (Sembunyikan jika di layar login)
     val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
 
-    // 2. Perbaikan LaunchedEffect
     // Hanya observasi untuk Force Logout. Navigasi masuk dikendalikan startDestination.
     LaunchedEffect(sessionState) {
-        if (sessionState is SessionState.LoggedOut || sessionState is SessionState.ForceLoggedOut) {
+        if (sessionState is SessionState.ForceLoggedOut) {
             navController.navigate("login_route") {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
+            sessionViewModel.resetStateToLoggedOut()
         }
     }
 
@@ -88,18 +89,41 @@ fun MainScreen(
         // 4. NavHost diletakkan di dalam Scaffold padding
         NavHost(
             navController = navController,
-            //perpindaha halaman dengan bottomnavitem.home.route
-            startDestination = if (sessionState is SessionState.LoggedIn) BottomNavItem.Home.route else "login_route",
+            // START DESTINATION SEKARANG ADALAH SPLASH
+            startDestination = "splash_route",
             modifier = Modifier.padding(innerPadding)
         ) {
+
+            composable("splash_route") {
+                SplashScreen(
+                    onNavigateToHome = {
+                        navController.navigate(BottomNavItem.Home.route) {
+                            // Hapus splash dari riwayat agar saat user tekan 'back', aplikasi keluar
+                            popUpTo("splash_route") { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate("login_route") {
+                            popUpTo("splash_route") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable("login_route") {
                 LoginScreen(onLoginSuccess = {
-
+                    // Ini yang akan dieksekusi saat LaunchedEffect di atas terpanggil!
+                    navController.navigate(BottomNavItem.Home.route) {
+                        // popUpTo penting agar user tidak bisa kembali ke halaman login pakai tombol 'back'
+                        popUpTo("login_route") { inclusive = true }
+                    }
                 })
             }
 
             composable("home_route") {
-                HomeProductScreen() // Panggil layar Home kamu di sini
+                HomeProductScreen(
+
+                )
             }
 
             composable("profile_route") {

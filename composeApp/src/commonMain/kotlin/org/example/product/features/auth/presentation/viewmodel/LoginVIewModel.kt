@@ -23,9 +23,6 @@ class AuthViewModel(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // Blok init DIHAPUS agar tidak otomatis hit API saat ViewModel dibuat.
-    // Pemanggilan API diserahkan ke UI melalui LaunchedEffect.
-
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -66,6 +63,21 @@ class AuthViewModel(
                 }
                 else -> {}
             }
+        }
+    }
+
+    fun checkSessionOnSplash() {
+        val token = tokenProvider.getAccessToken()
+
+        if (token.isNullOrBlank()) {
+            // SKENARIO 1: KOSONG
+            // Langsung set state ke Error agar Splash Screen memutar navigasi ke Login.
+            // Tidak perlu buang waktu dan kuota internet untuk nge-hit API.
+            _authState.value = AuthState.Error("Token tidak ditemukan")
+        } else {
+            // SKENARIO 2: ADA TOKEN
+            // Hit API untuk memastikan token ini masih 'hidup' (belum expired/revoked)
+            getCurrentUser()
         }
     }
 
