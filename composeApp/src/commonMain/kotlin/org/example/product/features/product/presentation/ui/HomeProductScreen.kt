@@ -14,11 +14,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import org.example.product.core.utils.components.NetworkImage
 import org.example.product.core.utils.components.shimmerEffect
 import org.example.product.features.product.domain.entity.ProductEntity
 import org.example.product.features.product.presentation.state.ProductState
@@ -97,11 +99,11 @@ fun ProductItem(product: ProductEntity) {
                     .height(150.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                AsyncImage(
-                    model = product.thumbnail,
+                NetworkImage(
+                    imageUrl = product.thumbnail,
                     contentDescription = product.title,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
 
