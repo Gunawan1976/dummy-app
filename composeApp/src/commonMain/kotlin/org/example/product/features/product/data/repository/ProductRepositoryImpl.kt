@@ -14,9 +14,8 @@ class ProductRepositoryImpl(
     override suspend fun getProducts(): Results<List<ProductEntity>> {
         return try {
             val response = api.getProducts()
-            
             Results.Success(
-                data = response.map { it.toProductEntity() }
+                data = response.products.map { it.toProductEntity() }
             )
         } catch (e: ClientRequestException) {
             Results.Error("Gagal mengambil data produk.", e)

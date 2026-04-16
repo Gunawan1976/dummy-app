@@ -70,13 +70,8 @@ class AuthViewModel(
         val token = tokenProvider.getAccessToken()
 
         if (token.isNullOrBlank()) {
-            // SKENARIO 1: KOSONG
-            // Langsung set state ke Error agar Splash Screen memutar navigasi ke Login.
-            // Tidak perlu buang waktu dan kuota internet untuk nge-hit API.
             _authState.value = AuthState.Error("Token tidak ditemukan")
         } else {
-            // SKENARIO 2: ADA TOKEN
-            // Hit API untuk memastikan token ini masih 'hidup' (belum expired/revoked)
             getCurrentUser()
         }
     }

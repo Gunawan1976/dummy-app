@@ -16,7 +16,7 @@ data class ProductModel (
     val id: Long,
     val title: String,
     val description: String,
-    val category: CategoryModel,
+    val category: String,
     val price: Double,
     val discountPercentage: Double,
     val rating: Double,
@@ -28,7 +28,7 @@ data class ProductModel (
     val dimensions: DimensionsModel,
     val warrantyInformation: String,
     val shippingInformation: String,
-    val availabilityStatus: AvailabilityStatusModel,
+    val availabilityStatus: String,
     val reviews: List<ReviewModel>,
     val returnPolicy: String,
     val minimumOrderQuantity: Long,
@@ -40,7 +40,7 @@ data class ProductModel (
         id = id,
         title = title,
         description = description,
-        category = category.toCategory(),
+        category = category,
         price = price,
         discountPercentage = discountPercentage,
         rating = rating,
@@ -52,7 +52,7 @@ data class ProductModel (
         dimensions = dimensions.toDimensions(),
         warrantyInformation = warrantyInformation,
         shippingInformation = shippingInformation,
-        availabilityStatus = availabilityStatus.toAvailabilityStatus(),
+        availabilityStatus = availabilityStatus,
         reviews = reviews.map { it.toReview() },
         returnPolicy = returnPolicy,
         minimumOrderQuantity = minimumOrderQuantity,
@@ -60,28 +60,6 @@ data class ProductModel (
         images = images,
         thumbnail = thumbnail
     )
-}
-
-@Serializable
-enum class AvailabilityStatusModel(val value: String) {
-    @SerialName("In Stock") InStock("In Stock"),
-    @SerialName("Low Stock") LowStock("Low Stock");
-
-    fun toAvailabilityStatus() = when(this) {
-        InStock -> AvailabilityStatus.InStock
-        LowStock -> AvailabilityStatus.LowStock
-    }
-}
-
-@Serializable
-enum class CategoryModel(val value: String) {
-    @SerialName("furniture") Furniture("furniture"),
-    @SerialName("groceries") Groceries("groceries");
-
-    fun toCategory() = when(this) {
-        Furniture -> Category.Furniture
-        Groceries -> Category.Groceries
-    }
 }
 
 @Serializable

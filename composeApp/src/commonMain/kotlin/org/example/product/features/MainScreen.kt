@@ -1,5 +1,7 @@
 package org.example.product.features
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -7,7 +9,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -62,7 +66,9 @@ fun MainScreen(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    modifier = Modifier.height(120.dp),
+                ) {
                     bottomNavItems.forEach { item ->
                         // Tentukan apakah item ini sedang aktif
                         val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -89,9 +95,8 @@ fun MainScreen(
         // 4. NavHost diletakkan di dalam Scaffold padding
         NavHost(
             navController = navController,
-            // START DESTINATION SEKARANG ADALAH SPLASH
             startDestination = "splash_route",
-            modifier = Modifier.padding(innerPadding)
+//            modifier = Modifier.padding(innerPadding)
         ) {
 
             composable("splash_route") {

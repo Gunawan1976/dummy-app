@@ -11,7 +11,7 @@ data class ProductEntity (
     val id: Long,
     val title: String,
     val description: String,
-    val category: Category,
+    val category: String,
     val price: Double,
     val discountPercentage: Double,
     val rating: Double,
@@ -23,7 +23,7 @@ data class ProductEntity (
     val dimensions: Dimensions,
     val warrantyInformation: String,
     val shippingInformation: String,
-    val availabilityStatus: AvailabilityStatus,
+    val availabilityStatus: String,
     val reviews: List<Review>,
     val returnPolicy: String,
     val minimumOrderQuantity: Long,
@@ -31,16 +31,6 @@ data class ProductEntity (
     val images: List<String>,
     val thumbnail: String
 )
-
-enum class AvailabilityStatus {
-    InStock,
-    LowStock
-}
-
-enum class Category {
-    Furniture,
-    Groceries
-}
 
 data class Dimensions (
     val width: Double,

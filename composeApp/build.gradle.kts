@@ -35,6 +35,7 @@ kotlin {
             implementation("app.cash.sqldelight:android-driver:2.0.2")
             implementation(libs.koin.android)
             implementation("androidx.core:core-splashscreen:1.2.0")
+
         }
         commonMain.dependencies {
             // Compose
@@ -78,6 +79,10 @@ kotlin {
 
             // Multiplatform Settings
             implementation(libs.multiplatform.settings)
+
+            // Coil
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
 
         }
         commonTest.dependencies {
