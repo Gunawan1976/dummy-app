@@ -15,21 +15,57 @@ class ProductViewModel (
     private val _state = MutableStateFlow<ProductState>(ProductState.Idle)
     val state: StateFlow<ProductState> = _state
 
-    fun getProduct(){
+    private var currentSkip = 0
+    private val limit = 10
+
+    fun getProduct() {
+        if (_state.value is ProductState.Loading) return
+        
         viewModelScope.launch {
             _state.value = ProductState.Loading
-
-            when ( val result = getProductsUseCase()) {
+            currentSkip = 0
+            
+            when (val result = getProductsUseCase(limit = limit, skip = currentSkip)) {
                 is Results.Success -> {
-                    _state.value = ProductState.Success(result.data)
+                    _state.value = ProductState.Success(
+                        products = result.data,
+                        isEndReached = result.data.size < limit
+                    )
+                    currentSkip += limit
                 }
                 is Results.Error -> {
                     _state.value = ProductState.Error(result.message)
                 }
                 else -> {}
             }
+        }
+    }
 
-
+    fun loadMore() {
+        val currentState = _state.value
+        if (currentState is ProductState.Success && !currentState.isEndReached && !currentState.isLoadingMore) {
+            _state.value = currentState.copy(isLoadingMore = true)
+            
+            viewModelScope.launch {
+                when (val result = getProductsUseCase(limit = limit, skip = currentSkip)) {
+                    is Results.Success -> {
+                        val updatedProducts = currentState.products + result.data
+                        _state.value = ProductState.Success(
+                            products = updatedProducts,
+                            isEndReached = result.data.size < limit,
+                            isLoadingMore = false
+                        )
+                        currentSkip += limit
+                    }
+                    is Results.Error -> {
+                        // In case of error while loading more, we might want to just stop loading more
+                        _state.value = currentState.copy(isLoadingMore = false)
+                    }
+                    else -> {
+                        _state.value = currentState.copy(isLoadingMore = false)
+                    }
+                }
+            }
         }
     }
 }

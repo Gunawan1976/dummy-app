@@ -5,8 +5,8 @@ import org.example.product.features.product.domain.entity.ProductEntity
 import org.example.product.features.product.domain.repository.ProductRepository
 
 class GetProductUseCase(private val repository: ProductRepository){
-    suspend operator fun invoke(): Results<List<ProductEntity>> {
-        return repository.getProducts()
+    suspend operator fun invoke(limit: Int, skip: Int): Results<List<ProductEntity>> {
+        return repository.getProducts(limit = limit, skip = skip)
 
     }
 }

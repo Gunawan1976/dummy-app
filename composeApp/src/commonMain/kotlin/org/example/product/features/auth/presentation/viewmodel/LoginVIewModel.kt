@@ -67,13 +67,14 @@ class AuthViewModel(
     }
 
     fun checkSessionOnSplash() {
-        val token = tokenProvider.getAccessToken()
-
-        if (token.isNullOrBlank()) {
-            _authState.value = AuthState.Error("Token tidak ditemukan")
-        } else {
-            getCurrentUser()
-        }
+//        val token = tokenProvider.getAccessToken()
+//
+//        if (token.isNullOrBlank()) {
+//            _authState.value = AuthState.Error("Token tidak ditemukan")
+//        } else {
+//            getCurrentUser()
+//        }
+        getCurrentUser()
     }
 
     fun logout() {

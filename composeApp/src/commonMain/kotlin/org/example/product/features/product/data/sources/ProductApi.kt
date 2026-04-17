@@ -7,7 +7,12 @@ import org.example.product.features.product.data.model.ProdukResponse
 
 class ProductApi(private val httpClient: HttpClient){
 
-    suspend fun getProducts(): ProdukResponse {
-        return httpClient.get("products").body()
+    suspend fun getProducts(limit: Int, skip: Int): ProdukResponse {
+        return httpClient.get("products"){
+            url {
+                parameters.append("limit", limit.toString())
+                parameters.append("skip", skip.toString())
+            }
+        }.body()
     }
 }

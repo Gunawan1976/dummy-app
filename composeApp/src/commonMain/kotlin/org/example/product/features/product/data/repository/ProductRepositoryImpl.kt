@@ -11,9 +11,9 @@ import org.example.product.features.product.domain.repository.ProductRepository
 class ProductRepositoryImpl(
     private val api: ProductApi
 ): ProductRepository{
-    override suspend fun getProducts(): Results<List<ProductEntity>> {
+    override suspend fun getProducts(limit: Int, skip: Int): Results<List<ProductEntity>> {
         return try {
-            val response = api.getProducts()
+            val response = api.getProducts(limit = limit, skip = skip)
             Results.Success(
                 data = response.products.map { it.toProductEntity() }
             )

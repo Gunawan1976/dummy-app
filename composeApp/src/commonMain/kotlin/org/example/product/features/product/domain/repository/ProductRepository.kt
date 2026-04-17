@@ -5,6 +5,6 @@ import org.example.product.features.product.domain.entity.ProductEntity
 
 interface ProductRepository{
 
-    suspend fun getProducts(): Results<List<ProductEntity>>
+    suspend fun getProducts(limit: Int, skip: Int): Results<List<ProductEntity>>
 
 }

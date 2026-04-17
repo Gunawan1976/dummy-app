@@ -39,7 +39,6 @@ fun SplashScreen(
 
     // 1. JALANKAN ANIMASI & HIT API SECARA PARALEL SAAT SPLASH DIBUKA
     LaunchedEffect(Unit) {
-        // Coroutine 1: Panggil API ke Server
         launch {
             authViewModel.checkSessionOnSplash()
         }
