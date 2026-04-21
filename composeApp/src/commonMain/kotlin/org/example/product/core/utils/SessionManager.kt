@@ -13,8 +13,6 @@ sealed class SessionState {
     data class ForceLoggedOut(val message: String) : SessionState()
 }
 
-// core/utils/SessionManager.kt
-
 class SessionManager(private val tokenProvider: TokenProvider) {
 
     private val _sessionState = MutableStateFlow<SessionState>(SessionState.Idle)
@@ -38,9 +36,9 @@ class SessionManager(private val tokenProvider: TokenProvider) {
     }
 
     fun logout() {
+        clearKtorCache?.invoke()
         tokenProvider.clearTokens()
         // 3. Panggil di sini agar Ktor membuang token yang lama
-        clearKtorCache?.invoke()
         _sessionState.value = SessionState.LoggedOut
     }
 

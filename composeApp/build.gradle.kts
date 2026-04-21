@@ -84,6 +84,10 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 
+            // Decompose
+            implementation(libs.decompose)
+            implementation(libs.decompose.compose)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
